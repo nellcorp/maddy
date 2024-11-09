@@ -55,7 +55,7 @@ func NewV1(e *echo.Echo) {
 		users.POST("", createUser)
 		users.GET("", listUsers)
 		users.GET("/:id", getUser)
-		users.PATCH("/:id/password", updateUserPassword)
+		users.POST("/:id/password", updateUserPassword)
 		users.DELETE("/:id", deleteUser)
 	}
 }

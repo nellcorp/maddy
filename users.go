@@ -39,11 +39,10 @@ func listUsers(c echo.Context) error {
 				results = append(results, user)
 			}
 		}
-	} else {
-		results = list
+		return c.JSON(http.StatusOK, results)
 	}
 
-	return c.JSON(http.StatusOK, results)
+	return c.JSON(http.StatusOK, list)
 }
 
 func getUser(c echo.Context) error {
@@ -70,7 +69,7 @@ func deleteUser(c echo.Context) error {
 }
 
 func updateUserPassword(c echo.Context) error {
-	r := model.User{}
+	r := model.Password{}
 
 	if err := c.Bind(&r); err != nil {
 		return err
