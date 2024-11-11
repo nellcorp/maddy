@@ -12,7 +12,7 @@ RUN go mod download
 COPY . ./
 RUN mkdir -p /pkg/data && \
     cp maddy.conf.docker /pkg/data/maddy.conf && \
-    ./build.sh --builddir /tmp --destdir /pkg/ --tags docker build install
+    ./build.sh --builddir /tmp --destdir /pkg/ --tags "libdns_route53 libdns_cloudflare docker" build install
 
 FROM alpine:3.18.4
 LABEL maintainer="fox.cpp@disroot.org"
