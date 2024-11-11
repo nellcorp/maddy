@@ -9,21 +9,34 @@ import (
 	echo "github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
+	"github.com/foxcpp/maddy/framework/module"
 	"github.com/foxcpp/maddy/internal/rest/util/server"
 
 	"github.com/foxcpp/maddy/internal/rest/util/middleware/basic_auth"
 )
 
 var (
-	globals map[string]interface{}
-	mods    []ModInfo
+	userDb    module.PlainUserDB
+	imapDb    module.ManageableStorage
+	mailboxes Mailboxes
 )
 
-func startApi(globalConfig map[string]interface{}, modules []ModInfo, wg *sync.WaitGroup) (err error) {
+func startApi(globals map[string]interface{}, mods []ModInfo, wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 
-	globals = globalConfig
-	mods = modules
+	userDb, err = openUserDB(globals, mods)
+	if err != nil {
+		return err
+	}
+
+	defer closeIfNeeded(userDb)
+
+	imapDb, mailboxes, err = openStorage(globals, mods)
+	if err != nil {
+		return err
+	}
+
+	defer closeIfNeeded(imapDb)
 
 	if os.Getenv("ADMIN_EMAIL") == "" || os.Getenv("ADMIN_PASSWORD") == "" {
 		log.Fatal("ADMIN_EMAIL and ADMIN_PASSWORD environment variables must be set")
@@ -40,7 +53,7 @@ func startApi(globalConfig map[string]interface{}, modules []ModInfo, wg *sync.W
 		Debug:               true,
 	})
 
-	return
+	return err
 }
 
 func NewV1(e *echo.Echo) {
@@ -57,6 +70,12 @@ func NewV1(e *echo.Echo) {
 		users.GET("/:id", getUser)
 		users.POST("/:id/password", updateUserPassword)
 		users.DELETE("/:id", deleteUser)
+	}
+
+	mailboxes := v1.Group("/users/:id/mailboxes")
+	{
+		mailboxes.POST("", createImapAccount)
+		mailboxes.DELETE("", deleteImapAccount)
 	}
 }
 

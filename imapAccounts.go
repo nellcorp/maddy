@@ -1,25 +1,16 @@
 package maddy
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/emersion/go-imap"
-	"github.com/foxcpp/maddy/framework/module"
-	"github.com/foxcpp/maddy/internal/rest/model"
 	echo "github.com/labstack/echo/v4"
 )
 
 func createImapAccount(c echo.Context) error {
-	r := model.User{}
-
-	if err := c.Bind(&r); err != nil {
-		return err
-	}
-
-	err := imapAcctCreate(r.Username)
+	err := imapAcctCreate(c.Param("id"))
 	if err != nil {
 		return err
 	}
@@ -27,17 +18,8 @@ func createImapAccount(c echo.Context) error {
 	return c.NoContent(http.StatusCreated)
 }
 
-func listImapAccounts(c echo.Context) error {
-	list, err := imapAcctList()
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusOK, list)
-}
-
 func deleteImapAccount(c echo.Context) error {
-	err := imapAcctRemove(c.Param("username"))
+	err := imapAcctRemove(c.Param("id"))
 	if err != nil {
 		return err
 	}
@@ -45,51 +27,12 @@ func deleteImapAccount(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func imapAcctList() (list []string, err error) {
-	list = []string{}
-
-	be, _, err := openStorage()
-	if err != nil {
-		return
-	}
-	defer closeIfNeeded(be)
-
-	mbe, ok := be.(module.ManageableStorage)
-	if !ok {
-		err = errors.New("Error: storage backend does not support accounts management using maddy command")
-		return
-
-	}
-
-	list, err = mbe.ListIMAPAccts()
-	if err != nil {
-		return
-	}
-
-	if len(list) == 0 {
-		return []string{}, nil
-	}
-
-	return
-}
-
 func imapAcctCreate(username string) error {
-	be, mbox, err := openStorage()
-	if err != nil {
-		return err
-	}
-	defer closeIfNeeded(be)
-
-	mbe, ok := be.(module.ManageableStorage)
-	if !ok {
-		return errors.New("Error: storage backend does not support accounts management using maddy command")
-	}
-
-	if err := mbe.CreateIMAPAcct(username); err != nil {
+	if err := imapDb.CreateIMAPAcct(username); err != nil {
 		return err
 	}
 
-	act, err := mbe.GetIMAPAcct(username)
+	act, err := imapDb.GetIMAPAcct(username)
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
 	}
@@ -106,19 +49,19 @@ func imapAcctCreate(username string) error {
 		return suu.CreateMailboxSpecial(name, specialUseAttr)
 	}
 
-	if err := createMbox(mbox.SentName, imap.SentAttr); err != nil {
+	if err := createMbox(mailboxes.SentName, imap.SentAttr); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create sent folder: %v", err)
 	}
-	if err := createMbox(mbox.TrashName, imap.TrashAttr); err != nil {
+	if err := createMbox(mailboxes.TrashName, imap.TrashAttr); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create trash folder: %v", err)
 	}
-	if err := createMbox(mbox.JunkName, imap.JunkAttr); err != nil {
+	if err := createMbox(mailboxes.JunkName, imap.JunkAttr); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create junk folder: %v", err)
 	}
-	if err := createMbox(mbox.DraftsName, imap.DraftsAttr); err != nil {
+	if err := createMbox(mailboxes.DraftsName, imap.DraftsAttr); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create drafts folder: %v", err)
 	}
-	if err := createMbox(mbox.ArchiveName, imap.ArchiveAttr); err != nil {
+	if err := createMbox(mailboxes.ArchiveName, imap.ArchiveAttr); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create archive folder: %v", err)
 	}
 
@@ -126,16 +69,5 @@ func imapAcctCreate(username string) error {
 }
 
 func imapAcctRemove(username string) error {
-	be, _, err := openStorage()
-	if err != nil {
-		return err
-	}
-	defer closeIfNeeded(be)
-
-	mbe, ok := be.(module.ManageableStorage)
-	if !ok {
-		return errors.New("storage backend does not support accounts management using maddy command")
-	}
-
-	return mbe.DeleteIMAPAcct(username)
+	return imapDb.DeleteIMAPAcct(username)
 }

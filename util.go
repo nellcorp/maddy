@@ -25,7 +25,7 @@ type (
 	}
 )
 
-func getCfgBlockModule(name string) (*ModInfo, error) {
+func getCfgBlockModule(mods []ModInfo, name string) (*ModInfo, error) {
 	var mod ModInfo
 	for _, m := range mods {
 		if m.Instance.InstanceName() == name {
@@ -46,9 +46,9 @@ func closeIfNeeded(i interface{}) {
 	}
 }
 
-func openUserDB() (module.PlainUserDB, error) {
+func openUserDB(globals map[string]interface{}, mods []ModInfo) (module.PlainUserDB, error) {
 	moduleName := "local_authdb"
-	mod, err := getCfgBlockModule(moduleName)
+	mod, err := getCfgBlockModule(mods, moduleName)
 	if err != nil {
 		return nil, err
 	}
@@ -65,22 +65,28 @@ func openUserDB() (module.PlainUserDB, error) {
 	return userDB, nil
 }
 
-func openStorage() (storage module.Storage, mailboxes Mailboxes, err error) {
+func openStorage(globals map[string]interface{}, mods []ModInfo) (storage module.ManageableStorage, mailboxes Mailboxes, err error) {
 	moduleName := "local_mailboxes"
-	mod, err := getCfgBlockModule(moduleName)
+	mod, err := getCfgBlockModule(mods, moduleName)
 	if err != nil {
-		return
+		return nil, Mailboxes{}, nil
 	}
 
-	storage, ok := mod.Instance.(module.Storage)
+	be, ok := mod.Instance.(module.Storage)
 	if !ok {
 		err = fmt.Errorf("Error: configuration block %s is not an IMAP storage", moduleName)
-		return
+		return nil, Mailboxes{}, err
+	}
+
+	storage, ok = be.(module.ManageableStorage)
+	if !ok {
+		err = fmt.Errorf("Error: configuration block %s is not a writable IMAP storage", moduleName)
+		return nil, Mailboxes{}, err
 	}
 
 	if err = mod.Instance.Init(config.NewMap(globals, mod.Cfg)); err != nil {
 		err = fmt.Errorf("Error: module initialization failed: %w", err)
-		return
+		return nil, Mailboxes{}, err
 	}
 
 	if updStore, ok := mod.Instance.(updatepipe.Backend); ok {
@@ -109,5 +115,5 @@ func openStorage() (storage module.Storage, mailboxes Mailboxes, err error) {
 		}
 	}
 
-	return
+	return storage, mailboxes, nil
 }

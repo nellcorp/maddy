@@ -12,13 +12,13 @@ import (
 )
 
 func createUser(c echo.Context) error {
-	r := model.User{}
+	r := model.CreateUserDto{}
 
 	if err := c.Bind(&r); err != nil {
 		return err
 	}
 
-	if err := userCreate(r.Username, r.Password); err != nil {
+	if err := userCreate(r.Username, r.Password, r.CreateMailboxes); err != nil {
 		return err
 	}
 
@@ -61,7 +61,8 @@ func getUser(c echo.Context) error {
 }
 
 func deleteUser(c echo.Context) error {
-	if err := userDelete(c.Param("id")); err != nil {
+	deleteMailbox := c.QueryParam("delete_mailbox") == "true"
+	if err := userDelete(c.Param("id"), deleteMailbox); err != nil {
 		return err
 	}
 
@@ -75,27 +76,15 @@ func updateUserPassword(c echo.Context) error {
 		return err
 	}
 
-	be, err := openUserDB()
-	if err != nil {
-		return err
-	}
-	defer closeIfNeeded(be)
-
-	if err = be.SetUserPassword(c.Param("id"), r.Password); err != nil {
+	if err := userDb.SetUserPassword(c.Param("id"), r.Password); err != nil {
 		return err
 	}
 
 	return c.NoContent(http.StatusOK)
 }
 
-func userCreate(username, password string) (err error) {
-	be, err := openUserDB()
-	if err != nil {
-		return
-	}
-	defer closeIfNeeded(be)
-
-	beHash, ok := be.(*pass_table.Auth)
+func userCreate(username, password string, createMailboxes bool) (err error) {
+	beHash, ok := userDb.(*pass_table.Auth)
 	if !ok {
 		return fmt.Errorf("Hash cannot be used with non-pass_table credentials DB")
 	}
@@ -107,23 +96,18 @@ func userCreate(username, password string) (err error) {
 		return err
 	}
 
-	err = imapAcctCreate(username)
-	if err != nil {
-		return
+	if createMailboxes {
+		err = imapAcctCreate(username)
+		if err != nil {
+			return
+		}
 	}
 
 	return
 }
 
 func userList() (list []string, err error) {
-	list = []string{}
-	be, err := openUserDB()
-	if err != nil {
-		return
-	}
-	defer closeIfNeeded(be)
-
-	list, err = be.ListUsers()
+	list, err = userDb.ListUsers()
 	if err != nil {
 		return
 	}
@@ -135,21 +119,18 @@ func userList() (list []string, err error) {
 	return
 }
 
-func userDelete(username string) (err error) {
-	be, err := openUserDB()
-	if err != nil {
-		return
-	}
-	defer closeIfNeeded(be)
-
-	err = be.DeleteUser(username)
+func userDelete(username string, deleteMailbox bool) (err error) {
+	err = userDb.DeleteUser(username)
 	if err != nil {
 		return
 	}
 
-	err = imapAcctRemove(username)
-	if err != nil {
-		return
+	if deleteMailbox {
+		err = imapAcctRemove(username)
+		if err != nil {
+			return
+		}
 	}
+
 	return
 }
