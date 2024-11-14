@@ -337,7 +337,7 @@ func moduleMain(cfg []config.Node) error {
 
 	if os.Getenv("ENABLE_API") == "true" {
 		wg.Add(1)
-		go startApi(globals, mods, &wg)
+		go startApi(mods, &wg)
 	}
 
 	wg.Wait()

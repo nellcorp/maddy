@@ -1,7 +1,6 @@
 package maddy
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"sync"
@@ -9,37 +8,42 @@ import (
 	echo "github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
+	"github.com/foxcpp/maddy/framework/log"
 	"github.com/foxcpp/maddy/framework/module"
+	"github.com/foxcpp/maddy/internal/modify/dkim"
 	"github.com/foxcpp/maddy/internal/rest/util/server"
 
 	"github.com/foxcpp/maddy/internal/rest/util/middleware/basic_auth"
 )
 
 var (
-	userDb    module.PlainUserDB
-	imapDb    module.ManageableStorage
-	mailboxes Mailboxes
+	userDb     module.PlainUserDB
+	imapDb     module.ManageableStorage
+	mailboxes  Mailboxes
+	dkimModule *dkim.Modifier
 )
 
-func startApi(globals map[string]interface{}, mods []ModInfo, wg *sync.WaitGroup) (err error) {
+func startApi(mods []ModInfo, wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 
-	userDb, err = openUserDB(globals, mods)
+	userDb, err = openUserDB()
 	if err != nil {
 		return err
 	}
 
-	defer closeIfNeeded(userDb)
-
-	imapDb, mailboxes, err = openStorage(globals, mods)
+	imapDb, mailboxes, err = openStorage(mods)
 	if err != nil {
 		return err
 	}
 
-	defer closeIfNeeded(imapDb)
+	var dkimErr error
+	if dkimModule, dkimErr = openDKIM(mods); dkimErr != nil {
+		log.Printf("DKIM module not found, DKIM signing will be disabled: %v\n", dkimErr)
+	}
 
 	if os.Getenv("ADMIN_EMAIL") == "" || os.Getenv("ADMIN_PASSWORD") == "" {
-		log.Fatal("ADMIN_EMAIL and ADMIN_PASSWORD environment variables must be set")
+		log.Println("ADMIN_EMAIL and ADMIN_PASSWORD environment variables must be set")
+		os.Exit(1)
 	}
 
 	e := server.New()

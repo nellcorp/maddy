@@ -158,7 +158,6 @@ func (m *Modifier) InstanceName() string {
 }
 
 func (m *Modifier) Init(cfg *config.Map) error {
-
 	cfg.Bool("debug", true, false, &m.log.Debug)
 	cfg.Bool("store_keys_in_database", false, false, &m.storeKeysInDB)
 	cfg.StringList("domains", false, false, m.domains, &m.domains)
@@ -243,6 +242,54 @@ func (m *Modifier) Init(cfg *config.Map) error {
 		}
 		m.signers[normDomain] = signer
 	}
+
+	return nil
+}
+
+func (m *Modifier) AddKey(domain string) error {
+	if m.table != nil {
+		ctx := context.Background()
+		_, ok, err := m.table.Lookup(ctx, domain)
+		if err != nil {
+			return err
+		}
+
+		if ok {
+			return nil
+		}
+
+		m.domains = append(m.domains, domain)
+	}
+
+	storeKeysInDB := m.storeKeysInDB && m.table != nil
+
+	if _, err := idna.ToASCII(domain); err != nil {
+		m.log.Printf("warning: unable to convert domain %s to A-labels form, non-EAI messages will not be signed: %v", domain, err)
+	}
+
+	keyValues := strings.NewReplacer("{domain}", domain, "{selector}", m.selector)
+	keyPath := keyValues.Replace(m.keyPathTemplate)
+
+	signer, newKey, err := m.loadOrGenerateKey(domain, keyPath, m.newKeyAlgo, storeKeysInDB)
+	if err != nil {
+		return err
+	}
+
+	if newKey {
+		dnsPath := keyPath + ".dns"
+		if filepath.Ext(keyPath) == ".key" {
+			dnsPath = keyPath[:len(keyPath)-4] + ".dns"
+		}
+		m.log.Printf("generated a new %s keypair, private key is in %s, TXT record with public key is in %s,\n"+
+			"put its contents into TXT record for %s._domainkey.%s to make signing and verification work",
+			m.newKeyAlgo, keyPath, dnsPath, m.selector, domain)
+	}
+
+	normDomain, err := dns.ForLookup(domain)
+	if err != nil {
+		return fmt.Errorf("sign_skim: unable to normalize domain %s: %w", domain, err)
+	}
+	m.signers[normDomain] = signer
 
 	return nil
 }
