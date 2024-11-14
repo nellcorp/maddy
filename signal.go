@@ -24,6 +24,7 @@ package maddy
 import (
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/foxcpp/maddy/framework/hooks"
@@ -36,7 +37,11 @@ import (
 // (SIGTERM, SIGHUP, SIGINT) will cause this function to return.
 //
 // SIGUSR1 will call reinitLogging without returning.
-func handleSignals() os.Signal {
+func handleSignals(wg *sync.WaitGroup) os.Signal {
+	if wg != nil {
+		defer wg.Done()
+	}
+
 	sig := make(chan os.Signal, 5)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGINT, syscall.SIGUSR1, syscall.SIGUSR2)
 
@@ -54,7 +59,7 @@ func handleSignals() os.Signal {
 			systemdStatus(SDReady, "Listening for incoming connections...")
 		default:
 			go func() {
-				s := handleSignals()
+				s := handleSignals(nil)
 				log.Printf("forced shutdown due to signal (%v)!", s)
 				os.Exit(1)
 			}()

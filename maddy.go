@@ -27,6 +27,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
+	"sync"
 
 	"github.com/caddyserver/certmagic"
 	parser "github.com/foxcpp/maddy/framework/cfgparser"
@@ -330,7 +331,16 @@ func moduleMain(cfg []config.Node) error {
 
 	systemdStatus(SDReady, "Listening for incoming connections...")
 
-	handleSignals()
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go handleSignals(&wg)
+
+	if os.Getenv("ENABLE_API") == "true" {
+		wg.Add(1)
+		go startApi(globals, mods, &wg)
+	}
+
+	wg.Wait()
 
 	systemdStatus(SDStopping, "Waiting for running transactions to complete...")
 

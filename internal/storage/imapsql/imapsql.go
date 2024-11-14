@@ -59,7 +59,11 @@ type Storage struct {
 	instName string
 	Log      log.Logger
 
-	junkMbox string
+	junkMbox    string
+	sentMBox    string
+	trashMBox   string
+	draftsMBox  string
+	archiveMBox string
 
 	driver string
 	dsn    []string
@@ -141,6 +145,10 @@ func (store *Storage) Init(cfg *config.Map) error {
 	cfg.Int("sqlite3_busy_timeout", false, false, 5000, &opts.BusyTimeout)
 	cfg.Bool("disable_recent", false, true, &opts.DisableRecent)
 	cfg.String("junk_mailbox", false, false, "Junk", &store.junkMbox)
+	cfg.String("sent_mailbox", false, false, "Sent", &store.sentMBox)
+	cfg.String("trash_mailbox", false, false, "Trash", &store.trashMBox)
+	cfg.String("archive_mailbox", false, false, "Archive", &store.archiveMBox)
+	cfg.String("drafts_mailbox", false, false, "Drafts", &store.draftsMBox)
 	cfg.Custom("imap_filter", false, false, func() (interface{}, error) {
 		return nil, nil
 	}, func(m *config.Map, node config.Node) (interface{}, error) {
