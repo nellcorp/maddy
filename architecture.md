@@ -135,6 +135,10 @@ Headers         (optional)                              Compression
 | DELETE | `/v1/users/:id` | Delete user (optional `?delete_mailbox=true`) | Yes |
 | POST | `/v1/users/:id/mailboxes` | Create mailbox | Yes |
 | DELETE | `/v1/users/:id/mailboxes` | Delete mailbox | Yes |
+| GET | `/v1/users/:id/quota` | Get user quota with mailbox breakdown | Yes |
+| PUT | `/v1/users/:id/quota` | Set user quota override | Yes |
+| GET | `/v1/domains/:domain/quota` | Get domain quota with user breakdown | Yes |
+| PUT | `/v1/domains/:domain/quota` | Set domain quota limit | Yes |
 
 #### Request/Response Models
 
@@ -156,6 +160,27 @@ type User struct {
 type Password struct {
     Password string `json:"password,omitempty" validate:"required"`
 }
+
+// Quota responses
+type UserQuotaResponse struct {
+    Username    string         `json:"username"`
+    UsedBytes   int64          `json:"usedBytes"`
+    QuotaBytes  int64          `json:"quotaBytes"`  // 0 = unlimited
+    QuotaSource string         `json:"quotaSource"` // "user", "domain", "none"
+    Mailboxes   []MailboxUsage `json:"mailboxes"`
+}
+
+type DomainQuotaResponse struct {
+    Domain     string      `json:"domain"`
+    UsedBytes  int64       `json:"usedBytes"`
+    QuotaBytes int64       `json:"quotaBytes"`
+    UserCount  int64       `json:"userCount"`
+    Users      []UserUsage `json:"users"`
+}
+
+type SetQuotaRequest struct {
+    QuotaBytes int64 `json:"quotaBytes" validate:"gte=0"`
+}
 ```
 
 #### Key Files
@@ -165,8 +190,11 @@ type Password struct {
 | `api.go` | Route registration, server startup, DB initialization |
 | `users.go` | User CRUD handlers and business logic |
 | `imapAccounts.go` | Mailbox create/delete handlers |
+| `quota.go` | Quota management handlers (get/set user and domain quotas) |
 | `util.go` | DB access helpers, mailbox config extraction |
 | `internal/rest/model/user.go` | Request/response DTOs |
+| `internal/rest/model/quota.go` | Quota request/response DTOs |
+| `internal/storage/imapsql/quota.go` | Quota enforcement (CheckQuota method) |
 | `internal/rest/util/server/server.go` | Echo server setup with middleware |
 | `internal/rest/util/server/secure.go` | Security headers, CORS configuration |
 | `internal/rest/util/middleware/basic_auth/` | Admin authentication |
@@ -255,7 +283,69 @@ When a mailbox is created, these IMAP SPECIAL-USE folders are provisioned:
 
 Folder names are read from the `local_mailboxes` configuration block.
 
-### 3. DNS Provider Support
+### 3. Quota Management
+
+The quota system enables storage limits at domain and user levels with SMTP delivery enforcement.
+
+```
+QUOTA HIERARCHY:
+
++-------------------+
+|   Domain Quota    |  <- Set via PUT /v1/domains/:domain/quota
+|   (domain_quotas  |
+|    table)         |
++--------+----------+
+         |
+         | inherited by all users unless overridden
+         v
++--------+----------+
+|   User Override   |  <- Set via PUT /v1/users/:id/quota
+|   (users.         |
+|   msgsizelimit)   |
++--------+----------+
+         |
+         | effective quota = user override > domain quota > unlimited
+         v
++--------+----------+
+|   SMTP Delivery   |  <- Checked in AddRcpt() and Body()
+|   Enforcement     |     Returns 552 "Mailbox quota exceeded"
++-------------------+
+```
+
+**Quota Calculation:**
+- Storage usage = `SUM(msgs.bodylen)` per user
+- Checked before accepting recipient (AddRcpt)
+- Checked with actual message size (Body)
+
+**Response Examples:**
+
+```json
+// GET /v1/users/user@example.com/quota
+{
+  "username": "user@example.com",
+  "usedBytes": 1234567,
+  "quotaBytes": 10485760,
+  "quotaSource": "domain",
+  "mailboxes": [
+    {"name": "INBOX", "messageCount": 50, "usedBytes": 800000},
+    {"name": "Sent", "messageCount": 30, "usedBytes": 400000}
+  ]
+}
+
+// GET /v1/domains/example.com/quota
+{
+  "domain": "example.com",
+  "usedBytes": 5000000,
+  "quotaBytes": 10485760,
+  "userCount": 3,
+  "users": [
+    {"username": "alice@example.com", "usedBytes": 2000000},
+    {"username": "bob@example.com", "usedBytes": 1500000, "quotaOverride": 5242880}
+  ]
+}
+```
+
+### 4. DNS Provider Support
 
 Added build support for AWS Route53 and Cloudflare DNS providers for ACME certificate automation.
 
@@ -379,8 +469,37 @@ The imapsql module creates and manages three key tables:
 +---------------+--------------+------+-----------------------------------+
 ```
 
+**4. domain_quotas** - Domain quota limits (fork addition)
+```
++---------------+--------------+------+-----------------------------------+
+| Column        | Type         | Null | Description                       |
++---------------+--------------+------+-----------------------------------+
+| id            | int8         | NO   | Primary key (auto-increment)      |
+| domain        | varchar(255) | NO   | Domain name (unique)              |
+| quota_bytes   | int8         | NO   | Quota limit in bytes (0=unlimited)|
+| created_at    | timestamp    | YES  | Creation timestamp                |
+| updated_at    | timestamp    | YES  | Last update timestamp             |
++---------------+--------------+------+-----------------------------------+
+```
+
+**5. user_quotas** - User quota overrides (fork addition)
+```
++---------------+--------------+------+-----------------------------------+
+| Column        | Type         | Null | Description                       |
++---------------+--------------+------+-----------------------------------+
+| id            | int8         | NO   | Primary key (auto-increment)      |
+| username      | varchar(255) | NO   | Email address (unique)            |
+| quota_bytes   | int8         | NO   | Quota limit in bytes (0=unlimited)|
+| created_at    | timestamp    | YES  | Creation timestamp                |
+| updated_at    | timestamp    | YES  | Last update timestamp             |
++---------------+--------------+------+-----------------------------------+
+```
+
 **Usage Notes:**
-- `msgs.bodylen` can be used to calculate storage usage and quotas (not yet implemented in Maddy)
+- `msgs.bodylen` is used to calculate storage usage (aggregated per user/mailbox)
+- `user_quotas.quota_bytes` stores user-specific quota override (takes precedence over domain)
+- `domain_quotas.quota_bytes` stores domain-wide quota (inherited by all users in domain)
+- `users.msgsizelimit` is for per-message size limits (NOT total quota)
 - `msgs.extbodykey` links to blob storage (S3) for actual message content
 - `mboxes.msgscount` tracks message count per folder
 - `mboxes.specialuse` stores IMAP SPECIAL-USE attributes (`\Sent`, `\Trash`, `\Junk`, `\Drafts`, `\Archive`)
@@ -396,22 +515,27 @@ The imapsql module creates and manages three key tables:
 ├── api.go                    # REST API initialization
 ├── users.go                  # User endpoint handlers
 ├── imapAccounts.go           # Mailbox endpoint handlers
+├── quota.go                  # Quota management handlers
 ├── util.go                   # DB helpers, config extraction
 │
-└── internal/rest/
-    ├── model/
-    │   └── user.go           # Request/response DTOs
-    │
-    └── util/
-        ├── middleware/
-        │   └── basic_auth/
-        │       └── basic_auth.go  # Admin auth validator
-        │
-        └── server/
-            ├── server.go     # Echo server, middleware stack
-            ├── secure.go     # Security headers, CORS
-            ├── ratelimiter.go # Rate limiting
-            └── binding.go    # Custom validation
+├── internal/rest/
+│   ├── model/
+│   │   ├── user.go           # User request/response DTOs
+│   │   └── quota.go          # Quota request/response DTOs
+│   │
+│   └── util/
+│       ├── middleware/
+│       │   └── basic_auth/
+│       │       └── basic_auth.go  # Admin auth validator
+│       │
+│       └── server/
+│           ├── server.go     # Echo server, middleware stack
+│           ├── secure.go     # Security headers, CORS
+│           ├── ratelimiter.go # Rate limiting
+│           └── binding.go    # Custom validation
+│
+└── internal/storage/imapsql/
+    └── quota.go              # CheckQuota method for enforcement
 ```
 
 ### Key Upstream Directories
