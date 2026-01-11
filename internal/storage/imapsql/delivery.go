@@ -71,6 +71,11 @@ func (d *delivery) AddRcpt(ctx context.Context, rcptTo string, _ smtp.RcptOption
 		return nil
 	}
 
+	// Check quota before accepting recipient (pre-check without message size)
+	if err := d.store.CheckQuota(accountName, 0); err != nil {
+		return err
+	}
+
 	// This header is added to the message only for that recipient.
 	// go-imap-sql does certain optimizations to store the message
 	// with small amount of per-recipient data in a efficient way.
@@ -101,6 +106,14 @@ func (d *delivery) AddRcpt(ctx context.Context, rcptTo string, _ smtp.RcptOption
 
 func (d *delivery) Body(ctx context.Context, header textproto.Header, body buffer.Buffer) error {
 	defer trace.StartRegion(ctx, "sql/Body").End()
+
+	// Check quota with actual message size for all recipients
+	msgSize := int64(body.Len())
+	for rcpt := range d.addedRcpts {
+		if err := d.store.CheckQuota(rcpt, msgSize); err != nil {
+			return err
+		}
+	}
 
 	if !d.msgMeta.Quarantine && d.store.filters != nil {
 		for rcpt, rcptData := range d.addedRcpts {

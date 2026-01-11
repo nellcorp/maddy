@@ -1,0 +1,54 @@
+name: "Build and Push Docker Image"
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  docker-build:
+    name: "Build & push Docker image"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Generate timestamp tag
+        id: timestamp
+        run: |
+          # Generate YYYY-MM-DD.milliseconds format
+          # %s gives Unix epoch seconds, %3N gives nanoseconds truncated to 3 digits (milliseconds)
+          TIMESTAMP=$(date -u +"%Y-%m-%d.%s%3N")
+          # Result: 2024-01-15.1705312345123 (date + epoch milliseconds)
+          echo "tag=${TIMESTAMP}" >> $GITHUB_OUTPUT
+          echo "Generated tag: ${TIMESTAMP}"
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          file: Dockerfile
+          push: true
+          tags: |
+            nellcorp/maddy:${{ steps.timestamp.outputs.tag }}
+            nellcorp/maddy:latest
+          labels: |
+            org.opencontainers.image.title=Maddy Mail Server
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
