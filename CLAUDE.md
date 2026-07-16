@@ -43,13 +43,16 @@ export MAILBOXES_DB_NAME=mailboxes
 1. REST API for user/mailbox management (Echo framework)
 2. User/mailbox lifecycle decoupling
 3. Route53/Cloudflare DNS provider support for ACME
+4. Quota management (per-user, per-domain, with SMTP enforcement)
 
 **Key files added/modified:**
 - `api.go` - REST API routes and initialization
 - `users.go` - User CRUD handlers
 - `imapAccounts.go` - Mailbox handlers
+- `quota.go` - Quota management handlers
 - `util.go` - DB access helpers
 - `internal/rest/` - REST API utilities and models
+- `internal/storage/imapsql/quota.go` - Quota enforcement logic
 
 ## Development Patterns
 
@@ -153,11 +156,14 @@ The imapsql module manages three key tables:
 | `users` | IMAP accounts | `id`, `username`, `msgsizelimit`, `inboxid` |
 | `mboxes` | Mailbox folders | `id`, `uid` (FK→users), `name`, `specialuse`, `msgscount` |
 | `msgs` | Message metadata | `mboxid` (FK→mboxes), `msgid`, `bodylen`, `extbodykey`, `seen` |
+| `domain_quotas` | Domain quota limits | `id`, `domain`, `quota_bytes` |
+| `user_quotas` | User quota overrides | `id`, `username`, `quota_bytes` |
 
-**Useful for future features:**
-- `msgs.bodylen` - Calculate storage usage/quotas (not yet implemented)
+**Key columns for quota:**
+- `msgs.bodylen` - Message size (aggregated for storage usage)
+- `user_quotas.quota_bytes` - User quota override (takes precedence over domain)
+- `domain_quotas.quota_bytes` - Domain-wide quota limit (inherited by users)
 - `mboxes.msgscount` - Message count per folder
-- `msgs.extbodykey` - Links to S3 blob storage
 
 See [architecture.md](./architecture.md#database-tables) for full schema details.
 
@@ -182,6 +188,26 @@ curl http://localhost:8080/v1/users \
 # Delete user
 curl -X DELETE http://localhost:8080/v1/users/user@example.com \
   -u admin@example.com:password
+
+# Get user quota (with mailbox breakdown)
+curl http://localhost:8080/v1/users/user@example.com/quota \
+  -u admin@example.com:password
+
+# Set user quota override (5MB)
+curl -X PUT http://localhost:8080/v1/users/user@example.com/quota \
+  -u admin@example.com:password \
+  -H "Content-Type: application/json" \
+  -d '{"quotaBytes": 5242880}'
+
+# Get domain quota (with user breakdown)
+curl http://localhost:8080/v1/domains/example.com/quota \
+  -u admin@example.com:password
+
+# Set domain quota (10MB)
+curl -X PUT http://localhost:8080/v1/domains/example.com/quota \
+  -u admin@example.com:password \
+  -H "Content-Type: application/json" \
+  -d '{"quotaBytes": 10485760}'
 ```
 
 ### Integration Tests

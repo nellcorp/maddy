@@ -3,11 +3,11 @@ package maddy
 import (
 	"errors"
 	"fmt"
-	"io"
 	"os"
 
-	"github.com/foxcpp/maddy/framework/config"
 	"github.com/foxcpp/maddy/framework/module"
+	"github.com/foxcpp/maddy/internal/modify"
+	"github.com/foxcpp/maddy/internal/modify/dkim"
 	"github.com/foxcpp/maddy/internal/updatepipe"
 )
 
@@ -40,58 +40,42 @@ func getCfgBlockModule(mods []ModInfo, name string) (*ModInfo, error) {
 	return &mod, nil
 }
 
-func closeIfNeeded(i interface{}) {
-	if c, ok := i.(io.Closer); ok {
-		c.Close()
-	}
-}
-
-func openUserDB(globals map[string]interface{}, mods []ModInfo) (module.PlainUserDB, error) {
+func openUserDB() (module.PlainUserDB, error) {
 	moduleName := "local_authdb"
-	mod, err := getCfgBlockModule(mods, moduleName)
+
+	userDBModule, err := module.GetInstance(moduleName)
 	if err != nil {
 		return nil, err
 	}
-
-	userDB, ok := mod.Instance.(module.PlainUserDB)
+	userDB, ok := userDBModule.(module.PlainUserDB)
 	if !ok {
 		return nil, fmt.Errorf("Error: configuration block %s is not a local credentials store", moduleName)
-	}
-
-	if err := mod.Instance.Init(config.NewMap(globals, mod.Cfg)); err != nil {
-		return nil, fmt.Errorf("Error: module initialization failed: %w", err)
 	}
 
 	return userDB, nil
 }
 
-func openStorage(globals map[string]interface{}, mods []ModInfo) (storage module.ManageableStorage, mailboxes Mailboxes, err error) {
+func openStorage(mods []ModInfo) (storage module.ManageableStorage, mailboxes Mailboxes, err error) {
 	moduleName := "local_mailboxes"
 	mod, err := getCfgBlockModule(mods, moduleName)
 	if err != nil {
 		return nil, Mailboxes{}, nil
 	}
 
-	be, ok := mod.Instance.(module.Storage)
-	if !ok {
-		err = fmt.Errorf("Error: configuration block %s is not an IMAP storage", moduleName)
+	if mod == nil {
+		err = fmt.Errorf("Error: configuration block %s is not found", moduleName)
 		return nil, Mailboxes{}, err
 	}
 
-	storage, ok = be.(module.ManageableStorage)
+	storage, ok := mod.Instance.(module.ManageableStorage)
 	if !ok {
 		err = fmt.Errorf("Error: configuration block %s is not a writable IMAP storage", moduleName)
 		return nil, Mailboxes{}, err
 	}
 
-	if err = mod.Instance.Init(config.NewMap(globals, mod.Cfg)); err != nil {
-		err = fmt.Errorf("Error: module initialization failed: %w", err)
-		return nil, Mailboxes{}, err
-	}
-
 	if updStore, ok := mod.Instance.(updatepipe.Backend); ok {
 		if err := updStore.EnableUpdatePipe(updatepipe.ModePush); err != nil && !errors.Is(err, os.ErrNotExist) {
-			fmt.Fprintf(os.Stderr, "Failed to initialize update pipe, do not remove messages from mailboxes open by clients: %v\n", err)
+			fmt.Fprintf(os.Stderr, "ErrorFailed to initialize update pipe, do not remove messages from mailboxes open by clients: %v\n", err)
 		}
 	} else {
 		fmt.Fprintf(os.Stderr, "No update pipe support, do not remove messages from mailboxes open by clients\n")
@@ -116,4 +100,17 @@ func openStorage(globals map[string]interface{}, mods []ModInfo) (storage module
 	}
 
 	return storage, mailboxes, nil
+}
+
+func openDKIM(mods []ModInfo) (*dkim.Modifier, error) {
+	for _, mod := range mods {
+		if group, ok := mod.Instance.(*modify.Group); ok {
+			for _, modifier := range group.Modifiers {
+				if dkimModifier, ok := modifier.(*dkim.Modifier); ok {
+					return dkimModifier, nil
+				}
+			}
+		}
+	}
+	return nil, fmt.Errorf("Error: DKIM modifier not found.")
 }

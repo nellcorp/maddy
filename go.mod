@@ -5,9 +5,8 @@ go 1.19
 require (
 	blitiri.com.ar/go/spf v1.5.1
 	github.com/GehirnInc/crypt v0.0.0-20230320061759-8cc1b52080c5
+	github.com/c0va23/go-proxyprotocol v0.9.1
 	github.com/caddyserver/certmagic v0.20.0
-	github.com/cmackenzie1/go-uuid v1.0.3
-	github.com/colinc86/wrappederror v1.0.7
 	github.com/didip/tollbooth/v6 v6.1.2
 	github.com/emersion/go-imap v1.2.2-0.20220928192137-6fac715be9cf
 	github.com/emersion/go-imap-compress v0.0.0-20201103190257-14809af1d1b9
@@ -31,7 +30,6 @@ require (
 	github.com/google/uuid v1.5.0
 	github.com/hashicorp/go-hclog v1.6.2
 	github.com/johannesboyne/gofakes3 v0.0.0-20210704111953-6a9f95c2941c
-	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/lib/pq v1.10.9
 	github.com/libdns/alidns v1.0.3-0.20230628155627-8d5d630d5516

@@ -89,6 +89,25 @@ func userCreate(username, password string, createMailboxes bool) (err error) {
 		return fmt.Errorf("Hash cannot be used with non-pass_table credentials DB")
 	}
 
+	userParts := strings.Split(username, "@")
+	if len(userParts) != 2 {
+		return fmt.Errorf("Invalid username format")
+	}
+	domain := userParts[1]
+
+	users, err := userDb.ListUsers()
+	if err != nil {
+		return err
+	}
+
+	found := false
+	for _, user := range users {
+		if strings.HasSuffix(user, domain) {
+			found = true
+			break
+		}
+	}
+
 	err = beHash.CreateUserHash(username, password, pass_table.HashBcrypt, pass_table.HashOpts{
 		BcryptCost: 10,
 	})
@@ -96,14 +115,20 @@ func userCreate(username, password string, createMailboxes bool) (err error) {
 		return err
 	}
 
-	if createMailboxes {
-		err = imapAcctCreate(username)
-		if err != nil {
-			return
+	if !found && dkimModule != nil {
+		if err = dkimModule.AddKey(domain); err != nil {
+			return err
 		}
 	}
 
-	return
+	if createMailboxes {
+		err = imapAcctCreate(username)
+		if err != nil {
+			return err
+		}
+	}
+
+	return err
 }
 
 func userList() (list []string, err error) {
