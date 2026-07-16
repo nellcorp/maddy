@@ -21,7 +21,7 @@ require (
 	github.com/foxcpp/go-imap-i18nlevel v0.0.0-20200208001533-d6ec88553005
 	github.com/foxcpp/go-imap-mess v0.0.0-20230108134257-b7ec3a649613
 	github.com/foxcpp/go-imap-namespace v0.0.0-20200802091432-08496dd8e0ed
-	github.com/foxcpp/go-imap-sql v0.5.1-0.20240121160244-7f314a0fe78a
+	github.com/foxcpp/go-imap-sql v0.5.1-0.20240831122236-655e4cb87d20
 	github.com/foxcpp/go-mockdns v1.0.0
 	github.com/foxcpp/go-mtasts v0.0.0-20191219193356-62bc3f1f74b8
 	github.com/go-ldap/ldap/v3 v3.4.6
@@ -35,7 +35,7 @@ require (
 	github.com/libdns/alidns v1.0.3-0.20230628155627-8d5d630d5516
 	github.com/libdns/cloudflare v0.1.1-0.20221006221909-9d3ab3c3cddd
 	github.com/libdns/digitalocean v0.0.0-20230728223659-4f9064657aea
-	github.com/libdns/gandi v1.0.3-0.20220921161957-dcd0274d2c79
+	github.com/libdns/gandi v1.0.3
 	github.com/libdns/googleclouddns v1.1.0
 	github.com/libdns/hetzner v0.0.1
 	github.com/libdns/leaseweb v0.3.1
@@ -49,6 +49,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.19
 	github.com/miekg/dns v1.1.58
 	github.com/minio/minio-go/v7 v7.0.66
+	github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354
 	github.com/netauth/netauth v0.6.2-0.20220831214440-1df568cd25d6
 	github.com/prometheus/client_golang v1.18.0
 	github.com/urfave/cli/v2 v2.27.1
@@ -182,3 +183,5 @@ require (
 )
 
 replace github.com/emersion/go-imap => github.com/foxcpp/go-imap v1.0.0-beta.1.0.20220623182312-df940c324887
+
+replace github.com/libdns/gandi => github.com/foxcpp/libdns-gandi v1.0.4-0.20240127130558-4782f9d5ce3e // v1.0.3+maddy.1

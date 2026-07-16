@@ -250,6 +250,8 @@ github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWR
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
+github.com/cmackenzie1/go-uuid v1.0.3 h1:MzZ/AZtBb0D6+mb2QbSrW4qEDYY121Z2fJaOGILKMBU=
+github.com/cmackenzie1/go-uuid v1.0.3/go.mod h1:CO4CyYB+E/iUS7fPtzXrCZFuYbTsSz4lhA5oizU9E08=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/cncf/udpa/go v0.0.0-20200629203442-efcf912fb354/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=
 github.com/cncf/udpa/go v0.0.0-20201120205902-5459f2c99403/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=
@@ -259,6 +261,8 @@ github.com/cncf/xds/go v0.0.0-20210805033703-aa0b78936158/go.mod h1:eXthEFrGJvWH
 github.com/cncf/xds/go v0.0.0-20210922020428-25de7278fc84/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/cncf/xds/go v0.0.0-20211001041855-01bcc9b48dfe/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/cncf/xds/go v0.0.0-20211011173535-cb28da3451f1/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
+github.com/colinc86/wrappederror v1.0.7 h1:J15LdTlRin2nLXjWSEDnhJAGCQiWC0VbHSPZ892mFxw=
+github.com/colinc86/wrappederror v1.0.7/go.mod h1:xQ4qbzX1h7gog+WZz8iNMrffwVv8iE1yX4GsS4tvQHw=
 github.com/cpuguy83/go-md2man/v2 v2.0.2/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/cpuguy83/go-md2man/v2 v2.0.3 h1:qMCsGGgs+MAzDFyp9LpAe1Lqy/fY/qCovCm0qnXZOBM=
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
@@ -322,13 +326,15 @@ github.com/foxcpp/go-imap-mess v0.0.0-20230108134257-b7ec3a649613 h1:fw9OWfPxP1C
 github.com/foxcpp/go-imap-mess v0.0.0-20230108134257-b7ec3a649613/go.mod h1:P/O/qz4gaVkefzJ40BUtN/ZzBnaEg0YYe1no/SMp7Aw=
 github.com/foxcpp/go-imap-namespace v0.0.0-20200802091432-08496dd8e0ed h1:1Jo7geyvunrPSjL6F6D9EcXoNApS5v3LQaro7aUNPnE=
 github.com/foxcpp/go-imap-namespace v0.0.0-20200802091432-08496dd8e0ed/go.mod h1:Shows1vmkBWO40ChOClaUe6DUnZrsP1UPAuoWzIUdgQ=
-github.com/foxcpp/go-imap-sql v0.5.1-0.20240121160244-7f314a0fe78a h1:/c5NvIHDrrU6+7glgr4YHwN3REH1bGb1l8s9S6ruORg=
-github.com/foxcpp/go-imap-sql v0.5.1-0.20240121160244-7f314a0fe78a/go.mod h1:LMlfyNkVs7v2zE6OVeGe9qWPmKFdXDmLNddPLodPVIw=
+github.com/foxcpp/go-imap-sql v0.5.1-0.20240831122236-655e4cb87d20 h1:q4NtuuK7Kuf8zHC1CF8p1GB1owd/IyN+zfqy8DQL9Ig=
+github.com/foxcpp/go-imap-sql v0.5.1-0.20240831122236-655e4cb87d20/go.mod h1:LMlfyNkVs7v2zE6OVeGe9qWPmKFdXDmLNddPLodPVIw=
 github.com/foxcpp/go-mockdns v0.0.0-20191216195825-5eabd8dbfe1f/go.mod h1:tPg4cp4nseejPd+UKxtCVQ2hUxNTZ7qQZJa7CLriIeo=
 github.com/foxcpp/go-mockdns v1.0.0 h1:7jBqxd3WDWwi/6WhDvacvH1XsN3rOLXyHM1uhvIx6FI=
 github.com/foxcpp/go-mockdns v1.0.0/go.mod h1:lgRN6+KxQBawyIghpnl5CezHFGS9VLzvtVlwxvzXTQ4=
 github.com/foxcpp/go-mtasts v0.0.0-20191219193356-62bc3f1f74b8 h1:k8w0iy6GP9oeSZWUH3p2DqZHaXDKZGNs3NZGZMGfQHc=
 github.com/foxcpp/go-mtasts v0.0.0-20191219193356-62bc3f1f74b8/go.mod h1:HO1YOCbBM8KjpgThMMFejHx6K/UsnEv2Oh9YGtBIlOU=
+github.com/foxcpp/libdns-gandi v1.0.4-0.20240127130558-4782f9d5ce3e h1:hKk+CGUtwnKDGKINPEojeo91kx0tnV6V4tlzHehJPfg=
+github.com/foxcpp/libdns-gandi v1.0.4-0.20240127130558-4782f9d5ce3e/go.mod h1:G6dw58Xnji2xX+lb+uZxGbtmfxKllm1CGHE2bOPG3WA=
 github.com/frankban/quicktest v1.5.0/go.mod h1:jaStnuzAqU1AJdCO0l53JDCJrVDKcS03DbaAcR7Ks/o=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=
 github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nosvA=
@@ -488,6 +494,8 @@ github.com/jmespath/go-jmespath/internal/testify v1.5.1 h1:shLQSRRSCCPj3f2gpwzGw
 github.com/jmespath/go-jmespath/internal/testify v1.5.1/go.mod h1:L3OGu8Wl2/fWfCI6z80xFu9LTZmf1ZRjMHUOPmWr69U=
 github.com/johannesboyne/gofakes3 v0.0.0-20210704111953-6a9f95c2941c h1:lx/uPI+mUWlqEQ9e6CtNvaK/zD64s/mQ9+yMh16PgY0=
 github.com/johannesboyne/gofakes3 v0.0.0-20210704111953-6a9f95c2941c/go.mod h1:LIAXxPvcUXwOcTIj9LSNSUpE9/eMHalTWxsP/kmWxQI=
+github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
+github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
@@ -522,8 +530,6 @@ github.com/libdns/cloudflare v0.1.1-0.20221006221909-9d3ab3c3cddd h1:c5hc0b5/pFq
 github.com/libdns/cloudflare v0.1.1-0.20221006221909-9d3ab3c3cddd/go.mod h1:ob9J/elFVmPWKNHOMynwtH0h+T3pBrEL18amCSliwAQ=
 github.com/libdns/digitalocean v0.0.0-20230728223659-4f9064657aea h1:IGlMNZCUp8Ho7NYYorpP5ZJgg2mFXARs6eHs/pSqFkA=
 github.com/libdns/digitalocean v0.0.0-20230728223659-4f9064657aea/go.mod h1:B2TChhOTxvBflpRTHlguXWtwa1Ha5WI6JkB6aCViM+0=
-github.com/libdns/gandi v1.0.3-0.20220921161957-dcd0274d2c79 h1:s5zuoIehXkSKg6Yfd5Oh1jEfvWXSn+eAttVHufSzDPE=
-github.com/libdns/gandi v1.0.3-0.20220921161957-dcd0274d2c79/go.mod h1:VN+Lh8Teq6nYszNsPSLKdIv24hOCcQu0rJWHQa2jPZc=
 github.com/libdns/googleclouddns v1.1.0 h1:murPR1LfTZZObLV2OLxUVmymWH25glkMFKpDjkk2m0E=
 github.com/libdns/googleclouddns v1.1.0/go.mod h1:3tzd056dfqKlf71V8Oy19En4WjJ3ybyuWx6P9bQSCIw=
 github.com/libdns/hetzner v0.0.1 h1:WsmcsOKnfpKmzwhfyqhGQEIlEeEaEUvb7ezoJgBKaqU=
@@ -582,6 +588,8 @@ github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd h1:TRLaZ9cD/w
 github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
 github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9Gz0M=
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
+github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354 h1:4kuARK6Y6FxaNu/BnU2OAaLF86eTVhP2hjTB6iMvItA=
+github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354/go.mod h1:KSVJerMDfblTH7p5MZaTt+8zaT2iEk3AkVb9PQdZuE8=
 github.com/netauth/netauth v0.6.2-0.20220831214440-1df568cd25d6 h1:TsF5Cl0Mj5JMvPOP2ySVq+CZoiPrTGwvNPbuQotuSAE=
 github.com/netauth/netauth v0.6.2-0.20220831214440-1df568cd25d6/go.mod h1:4PEbISVqRCQaXaDAt289w3nK9UhoF8/ZOLy31Hbv7ds=
 github.com/netauth/protocol v0.0.0-20210918062754-7fee492ffcbd h1:4yVpQ/+li28lQ/daYCWeDB08obRmjaoAw2qfFFaCQ40=
@@ -638,6 +646,7 @@ github.com/spf13/viper v1.18.2/go.mod h1:EKmWIqdnk5lOcmR72yw6hS+8OPYcwD0jteitLMV
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
 github.com/stretchr/objx v0.5.0/go.mod h1:Yh+to48EsGEfYuaHDzXPcE3xhTkx73EhmCGUpEOglKo=
+github.com/stretchr/testify v1.1.4/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
