@@ -52,12 +52,17 @@ func startApi(mods []ModInfo, wg *sync.WaitGroup) (err error) {
 		os.Exit(1)
 	}
 
+	port := os.Getenv("MADDY_PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	e := server.New()
 
 	NewV1(e)
 
 	server.Start(e, &server.Config{
-		Port:                "8080",
+		Port:                port,
 		ReadTimeoutSeconds:  30,
 		WriteTimeoutSeconds: 30,
 		Debug:               true,
