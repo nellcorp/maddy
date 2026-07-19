@@ -22,6 +22,7 @@ import (
 	"flag"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -42,13 +43,30 @@ func Logger(t *testing.T, name string) log.Logger {
 		}
 	}
 
+	// A server goroutine may emit a log line after the test function has
+	// returned (e.g. an SMTP handler noticing a reset connection). Calling
+	// t.Log then panics with "Log in goroutine after Test... has completed".
+	// Track completion under a mutex and drop such late logs instead.
+	var mu sync.Mutex
+	done := false
+	t.Cleanup(func() {
+		mu.Lock()
+		done = true
+		mu.Unlock()
+	})
+
 	return log.Logger{
 		Out: log.FuncOutput(func(_ time.Time, debug bool, str string) {
-			t.Helper()
 			str = strings.TrimSuffix(str, "\n")
 			if debug {
 				str = "[debug] " + str
 			}
+			mu.Lock()
+			defer mu.Unlock()
+			if done {
+				return
+			}
+			t.Helper()
 			t.Log(str)
 		}, func() error {
 			return nil
