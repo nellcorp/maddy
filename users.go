@@ -7,8 +7,6 @@ import (
 
 	"github.com/foxcpp/maddy/internal/rest/model"
 	echo "github.com/labstack/echo/v4"
-
-	"github.com/foxcpp/maddy/internal/auth/pass_table"
 )
 
 func createUser(c echo.Context) error {
@@ -18,7 +16,7 @@ func createUser(c echo.Context) error {
 		return err
 	}
 
-	if err := userCreate(r.Username, r.Password, r.CreateMailboxes); err != nil {
+	if err := userCreate(r.Username, r.CreateMailboxes); err != nil {
 		return err
 	}
 
@@ -69,26 +67,14 @@ func deleteUser(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func updateUserPassword(c echo.Context) error {
-	r := model.Password{}
-
-	if err := c.Bind(&r); err != nil {
-		return err
-	}
-
-	if err := userDb.SetUserPassword(c.Param("id"), r.Password); err != nil {
-		return err
-	}
-
-	return c.NoContent(http.StatusOK)
-}
-
-func userCreate(username, password string, createMailboxes bool) (err error) {
-	beHash, ok := userDb.(*pass_table.Auth)
-	if !ok {
-		return fmt.Errorf("Hash cannot be used with non-pass_table credentials DB")
-	}
-
+// userCreate provisions everything a new address needs on this side: a DKIM key
+// for a domain seen for the first time, and the IMAP account that holds its
+// mail.
+//
+// It writes no credential. Authentication reads the API's users table, which the
+// API has already written by the time it calls this, so a password stored here
+// would be a second copy free to drift from the first.
+func userCreate(username string, createMailboxes bool) (err error) {
 	userParts := strings.Split(username, "@")
 	if len(userParts) != 2 {
 		return fmt.Errorf("Invalid username format")
@@ -106,13 +92,6 @@ func userCreate(username, password string, createMailboxes bool) (err error) {
 			found = true
 			break
 		}
-	}
-
-	err = beHash.CreateUserHash(username, password, pass_table.HashBcrypt, pass_table.HashOpts{
-		BcryptCost: 10,
-	})
-	if err != nil {
-		return err
 	}
 
 	if !found && dkimModule != nil {
@@ -144,18 +123,12 @@ func userList() (list []string, err error) {
 	return
 }
 
+// userDelete removes the IMAP account. The credential it used to delete lives in
+// the API's users table now, and deleting that row is the API's own business.
 func userDelete(username string, deleteMailbox bool) (err error) {
-	err = userDb.DeleteUser(username)
-	if err != nil {
-		return
+	if !deleteMailbox {
+		return nil
 	}
 
-	if deleteMailbox {
-		err = imapAcctRemove(username)
-		if err != nil {
-			return
-		}
-	}
-
-	return
+	return imapAcctRemove(username)
 }
